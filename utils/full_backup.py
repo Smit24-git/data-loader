@@ -21,7 +21,7 @@ def run_full_backup(
         collector.clear_table(target_table_name, columns)
         completed = 0
         for (total_count, batched_rows) in accessor.yield_data_batches(table_name=table_name, columns=columns):
-            conv_rows = [[float(r_item) if type(r_item)==Decimal else r_item  for r_item in row] for row in batched_rows]
+            conv_rows = [[str(r_item) if type(r_item)==Decimal else r_item  for r_item in row] for row in batched_rows]
             collector.append_data(table_name=target_table_name, columns=columns, data=conv_rows)
             completed += len(batched_rows)
             yield  (total_count, completed)
