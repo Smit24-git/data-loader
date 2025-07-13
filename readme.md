@@ -1,5 +1,5 @@
 # Data Loader
-SQL data loader designed to extract and load from single sql database to lightweight sqlite database.
+SQL data loader designed to extract and load from single sql database to the lightweight sqlite tables.
 
 ## Prerequisites
 1. Python 3.13.5 (both 32 or 64 should work just fine)
