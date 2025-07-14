@@ -89,7 +89,7 @@ def main():
                'Please make sure all jobs are configured correctly.')
         return
 
-    if(job['type'] is None or job['type'] == 'full'):
+    if(hasKey(job, 'type') == False or job['type'] == 'full'):
         print("Full Backup may take several minutes to finish, Please wait until the job completes. :)")
         for (total_rows_count, completed) in run_full_backup(
                 source_connection_str=source_connection,
