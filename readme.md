@@ -35,11 +35,11 @@ Project uses `job_profiles.json` JSON file to configure profiles. the current st
 ]
 ```
 $$Properties$$ 
-* **disabled:** removes the profile from execution when set `True`. _optional_   
+* **disabled:** removes the profile from execution when set `True`. [_optional_]   
 * **name:**  unique profile name. Allows program to identify available jobs.
 * **desc:** Internal Notes. Not used within program. (may change in future)
 * **source.table:** table name of the source database. data from the provided source table will be retrieved on job execution.
-* **source.columns:** column names of the source database (separated by comma). columns provided in this list will be retrieved (and stored in to destination location) on job execution.
+* **source.columns:** column names of the source database (separated by comma). columns provided in this list will be retrieved (and stored in to destination location) on job execution.[_optional_]
 * **destination.table:** table name of the destination database. Retrieved data is transmitted to the provided destination table.
 
 ## Features

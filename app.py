@@ -54,7 +54,7 @@ def validate(jobs):
             return job
         if re.fullmatch(r'(\w|\.){1,30}', source['table']) is None:
             return job
-        if re.fullmatch(r'((\w)+(\s)*,?(\s)*)+', source['columns']) is None:
+        if hasKey(source, 'columns') and re.fullmatch(r'((\w)+(\s)*,?(\s)*)+', source['columns']) is None:
             return job
         if re.fullmatch(r'\w{1,30}', destination['table']) is None:
             return job             
@@ -89,14 +89,17 @@ def main():
                'Please make sure all jobs are configured correctly.')
         return
 
+    source_tbl = job['source']['table']
+    dest_tbl = job['destination']['table']
+    columns = job['source']['columns'] if hasKey(job['source'], 'columns') else None
     if(hasKey(job, 'type') == False or job['type'] == 'full'):
         print("Full Backup may take several minutes to finish, Please wait until the job completes. :)")
         for (total_rows_count, completed) in run_full_backup(
                 source_connection_str=source_connection,
                 target_database = target_database,
-                table_to_backup = job['source']['table'],
-                target_table = job['destination']['table'],
-                table_columns_to_backup= job['source']['columns']):
+                table_to_backup = source_tbl,
+                target_table = dest_tbl,
+                table_columns_to_backup= columns):
             print(f'{job['name']}: {math.ceil((completed/total_rows_count)*100)}%', "completed.", end='\r', file=out, flush=True)
         print('\n')
         print("Job Completed Successfully.")

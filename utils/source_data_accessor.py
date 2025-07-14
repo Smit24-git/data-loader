@@ -25,6 +25,14 @@ class SourceDataAccessor:
         self.batch_size = batch_size
         self.max_batch_count_per_request = max_batch_count_per_request 
     
+    def get_columns_for(self, table_name) -> list[str]:
+        """returns list of columns for table"""
+        crsr = self.cnxn.cursor()
+        
+        cols = [col[3] for col in crsr.columns(table_name).fetchall()]
+        return cols
+
+
     def __get_cursor_for(self, table_name, columns) -> pyodbc.Cursor:
         """returns cursor embedded with select command"""
         crsr = self.cnxn.cursor()
