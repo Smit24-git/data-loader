@@ -22,17 +22,15 @@ def input_selection(options):
     print('0 | Exit', end='\n\n')
 
     while (opt < 0 or opt>=max_allowed):
-        try:
-            opt = int(input('please choose your option:'))
-        except:
-            opt = -1
-        finally:
-            if opt < 0 or opt >= max_allowed:
-                print("Invalid Input, Try again")
+        try: opt = int(input('please choose your option:'))
+        except: opt = -1
+        
+        if opt < 0 or opt >= max_allowed:
+            print("Invalid Input, Try again")
 
     return opt
 
-def validate(jobs):
+def validate(jobs:list[dict]):
     """validates values"""
     for job in jobs:
         source = job['source']
