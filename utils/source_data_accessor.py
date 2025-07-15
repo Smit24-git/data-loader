@@ -25,14 +25,20 @@ class SourceDataAccessor:
         self.batch_size = batch_size
     
     def get_columns_from(self, query) -> list[str]:
-        """returns list of columns for table"""
+        """returns columns for query table"""
         crsr = self.cnxn.cursor()
         crsr.execute(query)        
         cols = [col[0] for col in crsr.description]
         return cols
     
+    def get_table_names(self) -> list[str]:
+        """returns tables"""
+        crsr = self.cnxn.cursor()
+        tables = [i[2] for i in crsr.tables().fetchall()]
+        return tables
+    
     def get_columns_of(self, table_name) -> list[str]:
-        """returns list of columns for table"""
+        """returns columns for table"""
         crsr = self.cnxn.cursor()        
         cols = [col[3] for col in crsr.columns(table_name).fetchall()]
         return cols

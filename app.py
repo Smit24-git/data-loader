@@ -5,13 +5,14 @@ import sys
 import math
 import re
 
+from utils.source_data_accessor import SourceDataAccessor
+
 __version__ = "0.0.3"
 
 env_values = dotenv_values('.env')
 source_connection = env_values['source_conn']
 target_database =  env_values['target_sqlite_db']
 out = sys.stdout
-injection_detection_r = r"(\s*([\0\b\'\"\n\r\t\%\_\\]*\s*(((select\s*.+\s*from\s*.+)|(insert\s*.+\s*into\s*.+)|(update\s*.+\s*set\s*.+)|(delete\s*.+\s*from\s*.+)|(drop\s*.+)|(truncate\s*.+)|(alter\s*.+)|(exec\s*.+)|(\s*(all|any|not|and|between|in|like|or|some|contains|containsall|containskey)\s*.+[\=\>\<=\!\~]+.+)|(let\s+.+[\=]\s*.*)|(begin\s*.*\s*end)|(\s*[\/\*]+\s*.*\s*[\*\/]+)|(\s*(\-\-)\s*.*\s+)|(\s*(contains|containsall|containskey)\s+.*)))(\s*[\;]\s*)*)+)"
  
 def input_selection(options):
     opt = -1
@@ -32,19 +33,10 @@ def input_selection(options):
 
 def validate(jobs:list[dict]):
     """validates values"""
+    # basic regex check
     for job in jobs:
         source = job['source']
         destination = job['destination']
-        for (k,v) in job.items():
-            if k == 'source' or k == 'destination':
-                for (_,vv) in v.items():
-                    if isinstance(vv, str) and re.match(injection_detection_r,vv) is not None:
-                        print("SQL Injection Detected!")
-                        return job
-            else:
-                if isinstance(v, str) and re.match(injection_detection_r,v) is not None:
-                    print("SQL Injection Detected!")
-                    return job
         
         if re.fullmatch(r'([\w\-]){1,30}',job['name']) is None:
             return job
@@ -56,6 +48,24 @@ def validate(jobs:list[dict]):
             return job
         if re.fullmatch(r'\w{1,30}', destination['table']) is None:
             return job             
+
+    # validate against basic sql syntax 
+    if re.fullmatch(r'(create|alter|drop|delete|insert|update|drop)+[-*;]*', destination['table'].strip()) is not None:
+        return job        
+
+    # validate source against database
+    if hasKey(source,'table'):
+        srcAccessor = SourceDataAccessor(source_connection)
+        tables:list[str] = srcAccessor.get_table_names()
+        if source['table'] not in tables:
+            return job
+
+    if hasKey(source, 'columns'):
+        columns = srcAccessor.get_columns_of(source['table'])
+        user_entered_cols = [i.strip() for i in source['columns'].split(',')]
+        if len(set(user_entered_cols).intersection(set(columns))) != len(user_entered_cols):
+            return job
+
     return None
            
 
