@@ -5,7 +5,7 @@ import sys
 import math
 import re
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 env_values = dotenv_values('.env')
 source_connection = env_values['source_conn']
