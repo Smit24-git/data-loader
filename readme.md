@@ -51,10 +51,14 @@ Jobs are validated before initiated. Validation checks for job profile configura
 
 Validation also looks for basic SQL injection threats. However, it is not advised to solely rely on this. To safeguard from any fatal errors within profiles, it is highly recommended to use the lease privileges principle while setting up the database connections.
  
+### Query Files
+For more advance queries, it is recommended to use store the source query in a file instead. 
+
+Source Queries can to be stored in an SQL file under `./commands/<profile_name>/source.sql` and `./commands/<profile_name>/count.sql`. Count sql is required in order to calculate estimated rows needed to be transferred.
+Count query should start with `Select Count(*) from ...`.
 
 ## Upcoming Features
 
-<!-- ### SQL Scripts -->
 <!-- ### Job Type -->
 <!-- ### Airflow -->
 

@@ -38,11 +38,11 @@ def validate(jobs:list[dict]):
         for (k,v) in job.items():
             if k == 'source' or k == 'destination':
                 for (_,vv) in v.items():
-                    if re.match(injection_detection_r,vv) is not None:
+                    if isinstance(vv, str) and re.match(injection_detection_r,vv) is not None:
                         print("SQL Injection Detected!")
                         return job
             else:
-                if re.match(injection_detection_r,v) is not None:
+                if isinstance(v, str) and re.match(injection_detection_r,v) is not None:
                     print("SQL Injection Detected!")
                     return job
         
@@ -50,7 +50,7 @@ def validate(jobs:list[dict]):
             return job
         if hasKey(job, 'type') and re.fullmatch(r'(full|part){1}', job['type']) is None:
             return job
-        if re.fullmatch(r'(\w|\.){1,30}', source['table']) is None:
+        if hasKey(source, 'table') and re.fullmatch(r'(\w|\.){1,30}', source['table']) is None:
             return job
         if hasKey(source, 'columns') and re.fullmatch(r'((\w)+(\s)*,?(\s)*)+', source['columns']) is None:
             return job
@@ -61,6 +61,10 @@ def validate(jobs:list[dict]):
 
 def hasKey(obj, key) -> bool:
     return key in obj.keys()
+
+def get_query(type, job_name) -> str:
+    with open(f'./commands/{job_name}/{type}.sql') as file:
+        return file.read()
 
 def main():
     """entry point"""
@@ -87,7 +91,9 @@ def main():
                'Please make sure all jobs are configured correctly.')
         return
 
-    source_tbl = job['source']['table']
+    source_query = get_query('source', job['name']) if hasKey(job['source'], 'from_file') and job['source']['from_file'] == True else None
+    source_count_query = get_query('count', job['name']) if hasKey(job['source'], 'from_file') and job['source']['from_file'] == True else None
+    source_tbl = job['source']['table'] if hasKey(job['source'], 'table') else None
     dest_tbl = job['destination']['table']
     columns = job['source']['columns'] if hasKey(job['source'], 'columns') else None
     if(hasKey(job, 'type') == False or job['type'] == 'full'):
@@ -97,7 +103,9 @@ def main():
                 target_database = target_database,
                 table_to_backup = source_tbl,
                 target_table = dest_tbl,
-                table_columns_to_backup= columns):
+                table_columns_to_backup = columns,
+                source_query = source_query,
+                source_count_query = source_count_query):
             print(f'{job['name']}: {math.ceil((completed/total_rows_count)*100)}%', "completed.", end='\r', file=out, flush=True)
         print('\n')
         print("Job Completed Successfully.")
