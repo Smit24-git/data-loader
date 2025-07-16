@@ -10,7 +10,8 @@ def run_full_backup(
         target_table,
         table_columns_to_backup,
         source_query,
-        source_count_query) -> Generator[list]:
+        source_count_query,
+        batch_size) -> Generator[list]:
     s_conn_str:str = source_connection_str
     t_database:str = target_database
     source_table_name:str = table_to_backup
@@ -18,8 +19,7 @@ def run_full_backup(
     columns:str = table_columns_to_backup
     
     collector = DestinationDataCollection(t_database)
-    
-    with SourceDataAccessor(connection=s_conn_str) as accessor:
+    with SourceDataAccessor(connection=s_conn_str, batch_size=batch_size) as accessor:
         if(source_query is not None):
             columns = ','.join(accessor.get_columns_from(source_query))
             collector.clear_table(target_table_name, columns)

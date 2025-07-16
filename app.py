@@ -1,5 +1,6 @@
 from utils.full_backup import run_full_backup
 from utils.jobs_accessor import get_jobs
+from utils.defaults.batch_size import default_batch_size
 from dotenv import dotenv_values
 import sys
 import math
@@ -33,11 +34,19 @@ def input_selection(options):
 
 def validate(jobs:list[dict]):
     """validates values"""
-    # basic regex check
     for job in jobs:
         source = job['source']
         destination = job['destination']
         
+        # basic type checks
+        if hasKey(job, 'batch_size') and isinstance(job['batch_size'], int) == False:
+            return job
+
+        # basic value boundary checks
+        if hasKey(job, 'batch_size') and int(job['batch_size']) < 2000:
+            return job
+
+        # basic regex check
         if re.fullmatch(r'([\w\-]){1,30}',job['name']) is None:
             return job
         if hasKey(job, 'type') and re.fullmatch(r'(full|part){1}', job['type']) is None:
@@ -49,22 +58,22 @@ def validate(jobs:list[dict]):
         if re.fullmatch(r'\w{1,30}', destination['table']) is None:
             return job             
 
-    # validate against basic sql syntax 
-    if re.fullmatch(r'(create|alter|drop|delete|insert|update|drop)+[-*;]*', destination['table'].strip()) is not None:
-        return job        
+        # validate against general sql syntax 
+        if re.fullmatch(r'(create|alter|drop|delete|insert|update|drop)+[-*;]*', destination['table'].strip()) is not None:
+            return job        
 
-    # validate source against database
-    if hasKey(source,'table'):
-        srcAccessor = SourceDataAccessor(source_connection)
-        tables:list[str] = srcAccessor.get_table_names()
-        if source['table'] not in tables:
-            return job
+        # validate source against database
+        if hasKey(source,'table'):
+            srcAccessor = SourceDataAccessor(source_connection)
+            tables:list[str] = srcAccessor.get_table_names()
+            if source['table'] not in tables:
+                return job
 
-    if hasKey(source, 'columns'):
-        columns = srcAccessor.get_columns_of(source['table'])
-        user_entered_cols = [i.strip() for i in source['columns'].split(',')]
-        if len(set(user_entered_cols).intersection(set(columns))) != len(user_entered_cols):
-            return job
+        if hasKey(source, 'columns'):
+            columns = srcAccessor.get_columns_of(source['table'])
+            user_entered_cols = [i.strip() for i in source['columns'].split(',')]
+            if len(set(user_entered_cols).intersection(set(columns))) != len(user_entered_cols):
+                return job
 
     return None
            
@@ -106,6 +115,7 @@ def main():
     source_tbl = job['source']['table'] if hasKey(job['source'], 'table') else None
     dest_tbl = job['destination']['table']
     columns = job['source']['columns'] if hasKey(job['source'], 'columns') else None
+    batch_size = job['batch_size'] if hasKey(job, 'batch_size') else default_batch_size 
     if(hasKey(job, 'type') == False or job['type'] == 'full'):
         print("Full Backup may take several minutes to finish, Please wait until the job completes. :)")
         for (total_rows_count, completed) in run_full_backup(
@@ -115,7 +125,8 @@ def main():
                 target_table = dest_tbl,
                 table_columns_to_backup = columns,
                 source_query = source_query,
-                source_count_query = source_count_query):
+                source_count_query = source_count_query,
+                batch_size = batch_size):
             print(f'{job['name']}: {math.ceil((completed/total_rows_count)*100)}%', "completed.", end='\r', file=out, flush=True)
         print('\n')
         print("Job Completed Successfully.")

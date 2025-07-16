@@ -1,6 +1,6 @@
 import pyodbc
 from collections.abc import Generator
-
+from utils.defaults.batch_size import default_batch_size
 # the advantage database server does not have any prevention against "WRITES"
 # Never Ever use any insert, update, and delete statements here.
 
@@ -13,7 +13,7 @@ class SourceDataAccessor:
         self.cnxn.rollback() # in case any changes incur
 
     """Exposes tables from advantage server."""
-    def __init__(self, connection, batch_size=5_000):
+    def __init__(self, connection, batch_size=default_batch_size):
         """Secures the connection, and disables autocommit"""
         self.connection = connection
         self.cnxn = pyodbc.connect(connection, autocommit=True)

@@ -4,6 +4,7 @@
         "name": "x-job-name",
         "desc": "what does this job do.",
         "type": "full",
+        "batch_size": 5000,
         "source": {
             "table": "source table name",
             "columns":"columns separated by comma"
