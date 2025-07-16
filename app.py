@@ -8,7 +8,7 @@ import re
 
 from utils.source_data_accessor import SourceDataAccessor
 
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 env_values = dotenv_values('.env')
 source_connection = env_values['source_conn']
