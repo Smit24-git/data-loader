@@ -3,6 +3,11 @@ from utils.source_data_accessor import SourceDataAccessor
 from utils.destination_data_collection import DestinationDataCollection
 from collections.abc import Generator
 
+
+def transform(batched_rows):
+    return [[str(r_item) if type(r_item)==Decimal else r_item  for r_item in row] for row in batched_rows]
+
+
 def run_full_backup(
         source_connection_str, 
         target_database, 
@@ -12,32 +17,30 @@ def run_full_backup(
         source_query,
         source_count_query,
         batch_size) -> Generator[list]:
-    s_conn_str:str = source_connection_str
-    t_database:str = target_database
-    source_table_name:str = table_to_backup
-    target_table_name:str = target_table
-    columns:str = table_columns_to_backup
     
-    collector = DestinationDataCollection(t_database)
-    with SourceDataAccessor(connection=s_conn_str, batch_size=batch_size) as accessor:
-        if(source_query is not None):
-            columns = ','.join(accessor.get_columns_from(source_query))
-            collector.clear_table(target_table_name, columns)
-            completed = 0
-            for (total_count, batched_rows) in accessor.yield_data_batches_by_query(query=source_query, count_query=source_count_query):
-                conv_rows = [[str(r_item) if type(r_item)==Decimal else r_item  for r_item in row] for row in batched_rows]
-                collector.append_data(table_name=target_table_name, columns=columns, data=conv_rows)
-                completed += len(batched_rows)
-                yield  (total_count, completed)
-        else:
-            if(columns is None or columns.strip() == ''):
+    collector = DestinationDataCollection(target_database)
+    with SourceDataAccessor(connection=source_connection_str, batch_size=batch_size) as accessor:
+        # fetch columns to process
+        if(source_query is None):
+            if(table_columns_to_backup is None or table_columns_to_backup.strip() == ''):
                 print("Columns are not provided, all columns are to be transmitted.")
-                columns = ','.join(accessor.get_columns_of(source_table_name))
-            
-            collector.clear_table(target_table_name, columns)
-            completed = 0
-            for (total_count, batched_rows) in accessor.yield_data_batches(table_name=source_table_name, columns=columns):
-                conv_rows = [[str(r_item) if type(r_item)==Decimal else r_item  for r_item in row] for row in batched_rows]
-                collector.append_data(table_name=target_table_name, columns=columns, data=conv_rows)
-                completed += len(batched_rows)
-                yield  (total_count, completed)
+                columns = ','.join(accessor.get_columns_of(table_to_backup))
+            else:
+                columns = table_columns_to_backup
+        else:
+            columns = ','.join(accessor.get_columns_from(source_query))
+        
+        # initialize target collector
+        collector.clear_table(target_table, columns)
+        completed = 0
+
+        if(source_query is None):
+            data_batches_generator = accessor.yield_data_batches(table_name=table_to_backup, columns=columns)
+        else:
+            data_batches_generator = accessor.yield_data_batches_by_query(query=source_query, count_query=source_count_query)
+        
+        for (total_count, batched_rows) in data_batches_generator:
+            transformed_rows = transform(batched_rows)
+            collector.append_data(table_name=target_table, columns=columns, data=transformed_rows)
+            completed += len(transformed_rows)
+            yield  (total_count, completed)
