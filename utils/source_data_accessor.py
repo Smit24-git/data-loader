@@ -10,20 +10,24 @@ class SourceDataAccessor:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.cnxn.rollback() # in case any changes incur
+        if self.cnxn is not None:
+            self.cnxn.rollback() # in case any changes incur
 
     """Exposes tables from advantage server."""
     def __init__(self, connection, batch_size=default_batch_size):
         """Secures the connection, and disables autocommit"""
         self.connection = connection
-        self.cnxn = pyodbc.connect(connection, autocommit=True)
+        self.batch_size = batch_size
+        self.connect()
+
+    def connect(self):
+        self.cnxn = pyodbc.connect(self.connection, autocommit=True)
         try:
             self.cnxn.autocommit = False
         except:
             print("AutoCommit for the source is set to True")
 
-        self.batch_size = batch_size
-    
+
     def get_columns_from(self, query) -> list[str]:
         """returns columns for query table"""
         crsr = self.cnxn.cursor()

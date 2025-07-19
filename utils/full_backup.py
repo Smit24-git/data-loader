@@ -1,46 +1,44 @@
 from decimal import Decimal
+from utils.job_profile import JobProfile
 from utils.source_data_accessor import SourceDataAccessor
 from utils.destination_data_collection import DestinationDataCollection
 from collections.abc import Generator
-
+import pyodbc
 
 def transform(batched_rows):
     return [[str(r_item) if type(r_item)==Decimal else r_item  for r_item in row] for row in batched_rows]
 
 
-def run_full_backup(
-        source_connection_str, 
-        target_database, 
-        table_to_backup,
-        target_table,
-        table_columns_to_backup,
-        source_query,
-        source_count_query,
-        batch_size) -> Generator[list]:
+def run_full_backup(prf:JobProfile) -> Generator[list]:
     
-    collector = DestinationDataCollection(target_database)
-    with SourceDataAccessor(connection=source_connection_str, batch_size=batch_size) as accessor:
-        # fetch columns to process
-        if(source_query is None):
-            if(table_columns_to_backup is None or table_columns_to_backup.strip() == ''):
-                print("Columns are not provided, all columns are to be transmitted.")
-                columns = ','.join(accessor.get_columns_of(table_to_backup))
+    collector = DestinationDataCollection(prf.destination.database_name)
+    try:
+        with SourceDataAccessor(connection=prf.source.connection_str, batch_size=prf.batch_size) as accessor:
+            # fetch columns to process
+            source_query = prf.source.get_query_from_file('source')
+            source_query_count = prf.source.get_query_from_file('count')
+            if(source_query is None):
+                if(prf.source.columns is None or prf.source.columns.strip() == ''):
+                    print("Columns are not provided, all columns are to be transmitted.")
+                    columns = ','.join(accessor.get_columns_of(prf.source.table))
+                else:
+                    columns = prf.source.columns
             else:
-                columns = table_columns_to_backup
-        else:
-            columns = ','.join(accessor.get_columns_from(source_query))
-        
-        # initialize target collector
-        collector.clear_table(target_table, columns)
-        completed = 0
+                columns = ','.join(accessor.get_columns_from(source_query))
+            
+            # initialize target collector
+            collector.clear_table(prf.destination.table, columns)
+            completed = 0
 
-        if(source_query is None):
-            data_batches_generator = accessor.yield_data_batches(table_name=table_to_backup, columns=columns)
-        else:
-            data_batches_generator = accessor.yield_data_batches_by_query(query=source_query, count_query=source_count_query)
-        
-        for (total_count, batched_rows) in data_batches_generator:
-            transformed_rows = transform(batched_rows)
-            collector.append_data(table_name=target_table, columns=columns, data=transformed_rows)
-            completed += len(transformed_rows)
-            yield  (total_count, completed)
+            if(source_query is None):
+                data_batches_generator = accessor.yield_data_batches(table_name=prf.source.table, columns=columns)
+            else:
+                data_batches_generator = accessor.yield_data_batches_by_query(query=source_query, count_query=source_query_count)
+            
+            for (total_count, batched_rows) in data_batches_generator:
+                transformed_rows = transform(batched_rows)
+                collector.append_data(table_name=prf.destination.table, columns=columns, data=transformed_rows)
+                completed += len(transformed_rows)
+                yield  (total_count, completed)
+    except pyodbc.Error as e:
+        print("Database Error occur. Batch can not be proceeded.", e)
