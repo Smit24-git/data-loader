@@ -25,37 +25,50 @@ class Source:
 
     def get_query_from_file(self, query_type):
         if self.from_file:
-            return get_query(query_type, self.job_name ) 
+            return get_query(query_type, self.job_name) 
         else:
             return None
     
     def validate(self):
         if self.connection_str is None:
             return False, 'Unable to identify default connection string of source database'
-        if self.table is not None and re.fullmatch(r'(\w|\.){1,30}', self.table) is None:
-            return False, 'Invalid source table name'
+        if self.table is not None:
+            if re.fullmatch(r'[\d|\.]+', self.table) is not None:
+                return False, 'Invalid source table name'
+            if  re.fullmatch(r'(\w|\.){1,30}', self.table) is None:
+                return False, 'Invalid source table name'
+            if re.fullmatch(r'(create|alter|drop|delete|insert|update|drop)+[-*;]*', self.table.strip()) is not None:
+                return False, 'Invalid source table name'        
         if self.columns is not None and re.fullmatch(r'((\w)+(\s)*,?(\s)*)+', self.columns) is None:
             return False, 'Invalid column name'
+        if self.from_file == False and self.table is None:
+            return False, 'Source table name is required.'
         
+        (res, err) = self.validate_against_source()
+        if res == False: return res, err
+        
+        return True, None
+    
+    def validate_against_source(self):
         srcAccessor = None
         try:
             srcAccessor = SourceDataAccessor(self.connection_str)
             if self.table is not None:
                 tables:list[str] = srcAccessor.get_table_names()
                 if self.table not in tables:
-                    return False, 'Invalid Table Name.'
+                    return False, 'Table does not exist.'
 
                 if self.columns is not None:
                     columns = srcAccessor.get_columns_of(self.table)
                     user_entered_cols = [i.strip() for i in self.columns.split(',')]
                     if len(set(user_entered_cols).intersection(set(columns))) != len(user_entered_cols):
-                        return False, 'Invalid Columns detected.'
+                        return False, 'one or more columns missing.'
         except pyodbc.Error as e:
             return False, 'Validation failed to compare the source dataset tables and columns.\n' \
             'Please make sure the source database is configured correctly.\n' \
             f'{e}'
         return True, None
-    
+
 class Destination:
     def __init__(self, json):
         self.database_name = default_target_db 
@@ -70,6 +83,9 @@ class Destination:
     def validate(self):
         if self.table is None:
             return (False, "Destination Table is Required")
+        
+        if re.fullmatch(r'\d{1,30}', self.table) is not None:
+            return False, 'Invalid destination table name'
         if re.fullmatch(r'\w{1,30}', self.table) is None:
             return False, 'Invalid destination table name'
         if re.fullmatch(r'(create|alter|drop|delete|insert|update|drop)+[-*;]*', self.table.strip()) is not None:
@@ -84,20 +100,31 @@ class JobProfile:
 
     @staticmethod
     def load_profiles():
+        profiles_json = []
         try:
             with open('job_profiles.json') as file:
                 profiles_json = json.load(file)
-                return [JobProfile(i) for i in profiles_json]
         except:
-            pass
-        return []
+            print('unable to load profiles. check whether the file exists or json is correctly formatted.')
+            return []
+        
+        profiles = []
+        failed_profiles = 0
+        for prf_json in profiles_json:
+            try:
+                profiles.append(JobProfile(prf_json))
+            except:
+                failed_profiles +=1
+        if failed_profiles > 0:
+            print('unable to load some profiles.')
+        return profiles
 
 
     def load_profile(self, json:dict):
         self.disabled = json['disabled'] if has_key(json,'disabled') else False
         self.name = json['name']
         self.type = json['type'] if has_key(json,'type') else None
-        self.desc = json['desc']
+        self.desc = json['desc'] if has_key(json, 'desc') else None
         self.batch_size = json['batch_size'] if has_key(json, 'batch_size') else default_batch_size
         self.source = Source(json['source'], self.name)
         self.destination = Destination(json['destination'])

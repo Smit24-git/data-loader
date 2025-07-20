@@ -40,6 +40,7 @@ $$Properties$$
 * **desc:** Internal Notes. Not used within program. (may change in future)
 * **source.table:** table name of the source database. data from the provided source table will be retrieved on job execution.
 * **source.columns:** column names of the source database (separated by comma). columns provided in this list will be retrieved (and stored in to destination location) on job execution.[_optional_]
+* **source.from_file:** if `True`, table and columns will be replaced with files present in `./commands/<profile-name>/*.sql` files. see Query Files section for more info. [_optional_]
 * **destination.table:** table name of the destination database. Retrieved data is transmitted to the provided destination table.
 
 ## Features
@@ -63,7 +64,7 @@ Count query should start with `Select Count(*) from ...`.
 <!-- ### Airflow -->
 
 ## Tests
-unit tests has not been implemented yet but are under consideration. 
+Project now includes decent test coverage to make sure the data is validated against different parameters.
 
 > [!IMPORTANT] \
 > It is not advised to use the tool directly in production without running it through the dev environment.

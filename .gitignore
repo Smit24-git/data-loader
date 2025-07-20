@@ -6,3 +6,4 @@ job_profiles.json
 commands/*
 !commands/readme.md
 todo
+.coverage
