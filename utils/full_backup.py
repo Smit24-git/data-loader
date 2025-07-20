@@ -20,7 +20,7 @@ def run_full_backup(prf:JobProfile) -> Generator[list]:
             if(source_query is None):
                 if(prf.source.columns is None or prf.source.columns.strip() == ''):
                     print("Columns are not provided, all columns are to be transmitted.")
-                    columns = ','.join(accessor.get_columns_of(prf.source.table))
+                    columns = ','.join(accessor.get_columns_of(prf.source.table, prf.source.schema))
                 else:
                     columns = prf.source.columns
             else:
@@ -31,7 +31,7 @@ def run_full_backup(prf:JobProfile) -> Generator[list]:
             completed = 0
 
             if(source_query is None):
-                data_batches_generator = accessor.yield_data_batches(table_name=prf.source.table, columns=columns)
+                data_batches_generator = accessor.yield_data_batches(table_name=prf.source.table_full_name, columns=columns)
             else:
                 data_batches_generator = accessor.yield_data_batches_by_query(query=source_query, count_query=source_query_count)
             

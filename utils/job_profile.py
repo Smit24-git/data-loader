@@ -1,7 +1,7 @@
 from utils.defaults.batch_size import default_batch_size
 from utils.defaults.source_connection_string import default_source_connection_string
 from utils.defaults.target_database import default_target_db
-from utils.helpers import has_key, get_query 
+from utils.helpers import get_connection_string, has_key, get_query 
 import re
 import pyodbc
 from utils.source_data_accessor import SourceDataAccessor
@@ -11,17 +11,21 @@ import json
 class Source:
     def __init__(self, json, job_name):
         self.job_name = job_name
-        self.connection_str = default_source_connection_string
+        self.table_full_name = None
         self.table = None
+        self.schema = None
         self.columns = None
         self.from_file = False
         self.load_profile(json=json)
 
     def load_profile(self, json:dict):
         if json is None: return
-        self.table = json['table'] if has_key(json, 'table') else None
+        self.table_full_name = json['table'] if has_key(json, 'table') else None
         self.columns = json['columns']  if has_key(json, 'columns') else None
         self.from_file = json['from_file'] if has_key(json, 'from_file') else False
+        
+        self.connection_str =  get_connection_string(json['datasource']) if has_key(json, 'datasource') else default_source_connection_string
+        self.table = self.table_full_name
 
     def get_query_from_file(self, query_type):
         if self.from_file:
@@ -32,16 +36,16 @@ class Source:
     def validate(self):
         if self.connection_str is None:
             return False, 'Unable to identify default connection string of source database'
-        if self.table is not None:
-            if re.fullmatch(r'[\d|\.]+', self.table) is not None:
+        if self.table_full_name is not None:
+            if re.fullmatch(r'[\d|\.]+', self.table_full_name) is not None:
                 return False, 'Invalid source table name'
-            if  re.fullmatch(r'(\w|\.){1,30}', self.table) is None:
+            if  re.fullmatch(r'(\w|\.){1,30}', self.table_full_name) is None:
                 return False, 'Invalid source table name'
-            if re.fullmatch(r'(create|alter|drop|delete|insert|update|drop)+[-*;]*', self.table.strip()) is not None:
+            if re.fullmatch(r'(create|alter|drop|delete|insert|update|drop)+[-*;]*', self.table_full_name.strip()) is not None:
                 return False, 'Invalid source table name'        
         if self.columns is not None and re.fullmatch(r'((\w)+(\s)*,?(\s)*)+', self.columns) is None:
             return False, 'Invalid column name'
-        if self.from_file == False and self.table is None:
+        if self.from_file == False and self.table_full_name is None:
             return False, 'Source table name is required.'
         
         (res, err) = self.validate_against_source()
@@ -53,13 +57,27 @@ class Source:
         srcAccessor = None
         try:
             srcAccessor = SourceDataAccessor(self.connection_str)
-            if self.table is not None:
+            if self.table_full_name is not None:
                 tables:list[str] = srcAccessor.get_table_names()
-                if self.table not in tables:
-                    return False, 'Table does not exist.'
+                if self.table_full_name not in [i[2] for i in tables]:
+                    table_split = self.table_full_name.split('.')
+                    if len(table_split) > 1:
+                        check = 2
+                        for i in range(len(table_split)-1, -1, -1):
+                            if table_split[i] not in [det[check] for det in tables]:
+                                return False, 'Table does not exist'
+                            else:
+                                if check == 2:
+                                    self.table = table_split[i]
+                                elif check == 1:
+                                    self.schema = table_split[i]
+                                check -= 1
+                    else:    
+                        return False, 'Table does not exist.'
+                    
 
                 if self.columns is not None:
-                    columns = srcAccessor.get_columns_of(self.table)
+                    columns = srcAccessor.get_columns_of(self.table, self.schema)
                     user_entered_cols = [i.strip() for i in self.columns.split(',')]
                     if len(set(user_entered_cols).intersection(set(columns))) != len(user_entered_cols):
                         return False, 'one or more columns missing.'

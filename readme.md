@@ -38,6 +38,7 @@ $$Properties$$
 * **disabled:** removes the profile from execution when set `True`. [_optional_]   
 * **name:**  unique profile name. Allows program to identify available jobs.
 * **desc:** Internal Notes. Not used within program. (may change in future)
+* **source.datasource:** specify different datasource for particular job. if not specified, default is used. _optional_
 * **source.table:** table name of the source database. data from the provided source table will be retrieved on job execution.
 * **source.columns:** column names of the source database (separated by comma). columns provided in this list will be retrieved (and stored in to destination location) on job execution.[_optional_]
 * **source.from_file:** if `True`, table and columns will be replaced with files present in `./commands/<profile-name>/*.sql` files. see Query Files section for more info. [_optional_]
@@ -57,6 +58,12 @@ For more advance queries, it is recommended to use store the source query in a f
 
 Source Queries can to be stored in an SQL file under `./commands/<profile_name>/source.sql` and `./commands/<profile_name>/count.sql`. Count sql is required in order to calculate estimated rows needed to be transferred.
 Count query should start with `Select Count(*) from ...`.
+
+### Multiple Source Connection
+Include `source.datasource` for any job requires different connection string than `default`. value of the datasource uses `<datasource>_source_conn` format in `.env` file.
+for instance, if `source.datasource` is set to `mssql`, then `.env` should have value for `mssql_source_conn`.
+
+Add as many source as needed. There are no limits to it. :)
 
 ## Upcoming Features
 

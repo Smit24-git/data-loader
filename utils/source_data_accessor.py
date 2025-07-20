@@ -38,13 +38,17 @@ class SourceDataAccessor:
     def get_table_names(self) -> list[str]:
         """returns tables"""
         crsr = self.cnxn.cursor()
-        tables = [i[2] for i in crsr.tables().fetchall()]
+        tables = [(i[0], i[1], i[2]) for i in crsr.tables().fetchall()]
+
         return tables
     
-    def get_columns_of(self, table_name) -> list[str]:
+    def get_columns_of(self, table_name, schema_name = None) -> list[str]:
         """returns columns for table"""
-        crsr = self.cnxn.cursor()        
-        cols = [col[3] for col in crsr.columns(table_name).fetchall()]
+        crsr = self.cnxn.cursor()
+        
+        cols_crsr = crsr.columns(table_name) if schema_name is None else crsr.columns(table=table_name, schema=schema_name)
+        
+        cols = [col[3] for col in cols_crsr.fetchall()]
         return cols
 
     def __get_cursor_for_query(self, query) -> pyodbc.Cursor:

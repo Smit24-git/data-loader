@@ -6,6 +6,7 @@
         "type": "full",
         "batch_size": 5000,
         "source": {
+            "datasource": "specify datasource if table exists in different source than default",
             "table": "source table name",
             "columns":"columns separated by comma"
         },
