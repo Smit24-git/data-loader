@@ -5,7 +5,7 @@ from utils.defaults.batch_size import default_batch_size
 # Never Ever use any insert, update, and delete statements here.
 
 class SourceDataAccessor:
-    cnxn: pyodbc.Connection
+
     def __enter__(self):
         return self
 
@@ -21,7 +21,7 @@ class SourceDataAccessor:
         self.connect()
 
     def connect(self):
-        self.cnxn = pyodbc.connect(self.connection)
+        self.cnxn = pyodbc.connect(self.connection, autocommit=True)
         try:
             self.cnxn.autocommit = False
         except:
