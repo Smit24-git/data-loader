@@ -5,7 +5,7 @@ from utils.defaults.batch_size import default_batch_size
 # Never Ever use any insert, update, and delete statements here.
 
 class SourceDataAccessor:
-
+    cnxn: pyodbc.Connection
     def __enter__(self):
         return self
 
@@ -21,7 +21,7 @@ class SourceDataAccessor:
         self.connect()
 
     def connect(self):
-        self.cnxn = pyodbc.connect(self.connection, autocommit=True)
+        self.cnxn = pyodbc.connect(self.connection)
         try:
             self.cnxn.autocommit = False
         except:
@@ -57,7 +57,7 @@ class SourceDataAccessor:
         crsr.execute(query)
         return crsr
     
-    def __get_cursor_for(self, table_name, columns) -> pyodbc.Cursor:
+    def __get_cursor_for_table(self, table_name, columns) -> pyodbc.Cursor:
         """returns cursor embedded with select command"""
         return self.__get_cursor_for_query(f"select {columns} from {table_name}")
     
@@ -85,7 +85,7 @@ class SourceDataAccessor:
     def yield_data_batches(self, table_name, columns) -> Generator[list]:
         """collects data in batches, ram intensive. if """
         total_row_count = self.__get_row_count(table_name)
-        crsr = self.__get_cursor_for(table_name, columns)
+        crsr = self.__get_cursor_for_table(table_name, columns)
         cnt = 0
         while True:
             rows = crsr.fetchmany(self.batch_size)

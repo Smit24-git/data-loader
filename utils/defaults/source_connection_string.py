@@ -1,8 +1,8 @@
-from dotenv import dotenv_values
+from utils.env import get_env
 
-env_values = dotenv_values('.env')
 
 try:
+    env_values = get_env()
     default_source_connection_string = env_values['source_conn']
 except:
     default_source_connection_string = None

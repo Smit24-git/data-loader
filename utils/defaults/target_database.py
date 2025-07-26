@@ -1,8 +1,8 @@
-from dotenv import dotenv_values
+from utils.env import get_env
 
-env_values = dotenv_values('.env')
 
 try:
+    env_values = get_env()
     default_target_db = env_values['target_sqlite_db']
 except:
     default_target_db = None

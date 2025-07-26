@@ -1,5 +1,5 @@
-from dotenv import dotenv_values
-env_values = dotenv_values('.env')
+from utils.env import get_env
+
 
 def get_query(type, job_name) -> str:
     try:
@@ -13,6 +13,8 @@ def has_key(obj, key) -> bool:
 
 def get_connection_string(data_source):
     try:
+        env_values = get_env()
         return env_values[f'{data_source}_source_conn']
-    except:
+    except KeyError:
+        print(f"{data_source}_source_conn is not configured.")
         return None

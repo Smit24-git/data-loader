@@ -122,8 +122,11 @@ class JobProfile:
         try:
             with open('job_profiles.json') as file:
                 profiles_json = json.load(file)
-        except:
-            print('unable to load profiles. check whether the file exists or json is correctly formatted.')
+        except ValueError as e:
+            print('Invalid profile:', e)
+            return []
+        except FileNotFoundError as e:
+            print('Profiles not found.', e)
             return []
         
         profiles = []
