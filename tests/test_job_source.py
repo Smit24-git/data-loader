@@ -37,8 +37,13 @@ def test_source_validation(mock_source, mock_col, mock_table, table, columns, re
        side_effect=pyodbc.Error)
 @patch('utils.source_data_accessor.SourceDataAccessor.get_table_names',
        side_effect=pyodbc.Error)
+@patch('utils.env.get_env', return_value = { 
+       'source_conn':  "source_connection_string",
+       'target_sqlite_db': 'target.db',
+       'default_batch_size': 100
+})
 @pytest.mark.parametrize('table,columns,result',source_table_validations)
-def test_source_validation_against_odbc_error(mock_source, mock_col, mock_table, table, columns, result):
+def test_source_validation_against_odbc_error(mock_source, mock_col, mock_table,mock_env, table, columns, result):
     """"""
     json = valid_full_json.copy()
     source = Source(json['source'], json['name'])
@@ -51,6 +56,11 @@ def test_source_validation_against_odbc_error(mock_source, mock_col, mock_table,
 
 @patch('utils.job_profile.Source.validate_against_source',
        return_value=(True, None))
+@patch('utils.env.get_env', return_value = { 
+       'source_conn':  "source_connection_string",
+       'target_sqlite_db': 'target.db',
+       'default_batch_size': 100
+})
 @pytest.mark.parametrize('invalid_table_name', [
     'my table',
     'mytable;',
@@ -60,7 +70,7 @@ def test_source_validation_against_odbc_error(mock_source, mock_col, mock_table,
     'drop',
     '--' 
 ])
-def test_invalid_source_table_name(_, invalid_table_name):
+def test_invalid_source_table_name(_,mock_env, invalid_table_name):
     json = valid_full_json.copy() 
     source = Source(json['source'], json['name'])
     source.table_full_name = invalid_table_name
