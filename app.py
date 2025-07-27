@@ -5,6 +5,7 @@ import sys
 import math
 import logging
 import argparse
+from prefect import task
 
 __version__ = "0.1.2"
 out = sys.stdout
@@ -47,7 +48,7 @@ def input_selection(options: List[JobProfile]):
 
     return opt
            
-
+@task
 def main(job_name):
     """entry point"""
     setup_logging()
@@ -91,8 +92,7 @@ def main(job_name):
             logger.error("Job Type is not supported!")
     else:
         logger.error(f'Invalid job {job.name}.\n',
-               msg if msg is not None else 'Please make sure all jobs are configured correctly.',
-               sep='')    
+               msg if msg is not None else 'Please make sure all jobs are configured correctly.')    
     logger.info('Finished')
 
 if __name__ == '__main__':

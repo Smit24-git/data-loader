@@ -1,0 +1,30 @@
+# Welcome to your prefect.yaml file! You can use this file for storing and managing
+# configuration for deploying your flows. We recommend committing this file to source
+# control along with your flow code.
+
+# Generic metadata about this project
+name: etl
+prefect-version: 3.4.10
+
+# build section allows you to manage and build docker images
+build:
+  - prefect.deployments.steps.run_shell_script:
+      script: py -m pip install -r requirements.txt
+      stream_output: true
+
+# the deployments section allows you to provide configuration for deploying flows
+deployments:
+- name: test
+  version: 1.0.0
+  tags: ['test']
+  description: test 123
+  schedule: {}
+  flow_name: main 
+  entrypoint: flows.py:main
+  parameters: {
+    job_name: '<job_name>'
+  }
+  work_pool:
+    name: <worker_pool_name>
+    work_queue_name: null
+    job_variables: {}

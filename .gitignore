@@ -8,3 +8,4 @@ commands/*
 todo
 .coverage
 *.log
+prefect.yaml
