@@ -7,7 +7,7 @@ import logging
 import argparse
 from prefect import task
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 out = sys.stdout
 
 # arg parse
