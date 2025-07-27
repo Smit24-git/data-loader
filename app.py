@@ -4,12 +4,31 @@ from utils.job_profile import JobProfile
 import sys
 import math
 import logging
-
-logger = logging.getLogger(__name__)
+import argparse
 
 __version__ = "0.1.2"
-
 out = sys.stdout
+
+# arg parse
+parser = argparse.ArgumentParser()
+parser.add_argument('-n','--name', metavar='name', dest='job_name', help='job name to run.')
+
+# logger
+logger = logging.getLogger(__name__)
+def setup_logging():
+    FORMAT = '%(asctime)s -  %(name)s -  %(levelname)s - %(message)s'
+    
+    logging.basicConfig(
+        filename='app.log', 
+        level=logging.INFO,
+        format=FORMAT)
+    
+    # to stdout
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(logging.Formatter(FORMAT))
+    logger.addHandler(handler)
+
  
 def input_selection(options: List[JobProfile]):
     opt = -1
@@ -28,48 +47,42 @@ def input_selection(options: List[JobProfile]):
 
     return opt
            
-def setup_logging():
-    FORMAT = '%(asctime)s -  %(name)s -  %(levelname)s - %(message)s'
-    
-    logging.basicConfig(
-        filename='app.log', 
-        level=logging.INFO,
-        format=FORMAT)
-    
-    # to stdout
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(logging.Formatter(FORMAT))
-    logger.addHandler(handler)
 
-
-
-def main():
+def main(job_name):
     """entry point"""
     setup_logging()
     logger.info(f'Started v{__version__}')
+    
     profiles = JobProfile.load_profiles()
     profiles = [j for j in profiles if j.disabled == False]
     
     if len(profiles) == 0:
         logger.info("No jobs to load. Please add at least one job to proceed further.")
         return
-
     print(len(profiles), "Job(s) Loaded successfully.", end='\n\n')
 
-    opt = input_selection(profiles)
+    job:JobProfile = None
 
-    if opt==0:
-        logger.info('Ended')
-        return
+    if job_name is None:
+        opt = input_selection(profiles)
+        if opt==0:
+            logger.info('Ended')
+            return
+        
+        job = profiles[opt-1]
+    else:    
+        jobs = [p for p in profiles if p.name == job_name]
+        if len(jobs) == 0:
+            logger.error(f"job '{job_name}' not found.")
+            logger.info(f"Ended")
+            return
+        job = jobs.pop()
     
-    job = profiles[opt-1]
     (is_success, msg) = job.validate()
     
     logger.info(f'{job.name} job selected.')
     if is_success:
         if(job.type is None or job.type == 'full'):
-            logger.info("Full Backup may take several minutes to finish, Please wait until the job completes. :)")
             for (total_rows_count, completed) in run_full_backup(job):
                 print(f'{job.name}: {math.ceil((completed/total_rows_count)*100)}%', "completed.", end='\r', file=out, flush=True)
             print('\n')
@@ -82,4 +95,6 @@ def main():
                sep='')    
     logger.info('Finished')
 
-if __name__ == '__main__':    main()
+if __name__ == '__main__':
+    args = parser.parse_args()
+    main(args.job_name)
