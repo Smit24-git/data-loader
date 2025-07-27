@@ -3,3 +3,4 @@ pytest
 pytest-mock
 dotenv
 coverage
+jsonschema==4.25.0

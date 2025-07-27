@@ -39,6 +39,20 @@ missing_name_json = {
 
 }
 
+missing_source_table_json = {
+    'name': 'test',
+    'type': 'full',
+    # 'desc': 'should load successfully'
+    'batch_size': 5000,
+    'source': {
+        'from_file': False,
+        'columns': 'Id, DatesetId',
+    },
+    'destination': {
+        'table': 'testSet'
+    }
+}
+
 missing_desc_json = {
     'name': 'test',
     'type': 'full',

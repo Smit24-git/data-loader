@@ -7,9 +7,77 @@ import pyodbc
 from utils.source_data_accessor import SourceDataAccessor
 import json
 import logging
+from jsonschema import SchemaError, ValidationError, validate
 
 logger = logging.getLogger(__name__)
 
+basic_schema = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Job Profiles",
+    "description": "List of profiles.",
+    "type": "array",
+    "items": {
+        "description": "Profile",
+        "type": "object",
+        "properties": {
+            "disabled": {
+                "description": "optional flag to disable profile",
+                "type": "boolean"
+            },
+            "name": {
+                "description": "profile name",
+                "type": "string",
+                "minLength": 1
+            },
+            "desc": {
+                "description": "profile description",
+                "type": "string",
+            },
+            "type": {
+                "description": "describes how the job is loaded.",
+                "enum": ["full", "part"]
+            },
+            "batch_size": {
+                "description": "number of records to be processed per batch",
+                "type": "number"
+            },
+            "source": {
+                "description": "source location configuration for the profile",
+                "type": "object",
+                "properties": {
+                    "datasource": {
+                        "description": "source data source key to target specific source location",
+                        "type": "string"
+                    },
+                    "table": {
+                        "description": "name of the source table to be transmitted",
+                        "type": "string"
+                    },
+                    "columns": {
+                        "description": "names of the column to be transmitted (separated by comma)",
+                        "type": "string"
+                    },
+                },
+                "dependentRequired": {
+                    "columns": ["table"]
+                },
+            },
+            "destination": {
+                "description": "target location configuration for the profile",
+                "type": "object",
+                "properties": {
+                    "table": {
+                        "description":"name of the destination table",
+                        "type": "string"
+                    }
+                }
+            },
+        }
+    },
+    "minItems": 1,
+    "uniqueItems": True,
+    "required": ['name'],
+}
 
 class Source:
     def __init__(self, json, job_name):
@@ -125,11 +193,20 @@ class JobProfile:
         try:
             with open('job_profiles.json') as file:
                 profiles_json = json.load(file)
+                # validate structure and types
+                validate(profiles_json, basic_schema)
+
         except ValueError as e:
             logger.error('Invalid profile:', e)
             return []
         except FileNotFoundError as e:
             logger.error('Profiles not found.', e)
+            return []
+        except ValidationError as e:
+            logger.error('invalid profile(s).', e)
+            return []
+        except SchemaError as e:
+            logger.critical("invalid schema.", e)
             return []
         
         profiles = []

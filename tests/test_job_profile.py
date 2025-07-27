@@ -138,21 +138,37 @@ def test_invalid_profile_type(invalid_profile_type):
 @patch('builtins.open', new_callable=mock_open, read_data = json.dumps([
     valid_full_json,
     valid_from_file_json,
-    missing_name_json, # fails on load
     missing_desc_json,
-    invalid_batch_data_type_json,
     invalid_batch_size_json
 ]))
-def test_load_profiles(mock_file):
+@patch('utils.job_profile.logger')
+def test_load_profiles(mock_file, mock_open):
     """validates accurate profile loading behavior"""
     jobs = JobProfile.load_profiles()
-    assert len(jobs) == 5, 'unable to load correct amount of profiles'
+    assert len(jobs) == 4, 'unable to load correct amount of profiles'
 
 
 @patch('builtins.open', new_callable=mock_open)
-def test_missing_profile_file(mock_file):
+@patch('utils.job_profile.logger')
+def test_missing_profile_file(mock_logger, mock_file):
     mock_file.side_effect = [FileNotFoundError]
-    jobs = JobProfile.load_profiles()
-    assert len(jobs) == 0, 'unable to handle file not found exception'
+    _ = JobProfile.load_profiles()
+    mock_logger.error.assert_called_once()
     
+
+@pytest.mark.parametrize('invalid_results',[
+    [missing_name_json],
+    [invalid_batch_data_type_json],
+    {},
+    None,
+    [],
+])
+@patch('utils.job_profile.logger')
+@patch('builtins.open', new_callable=mock_open)
+def test_schema_validation_for_invalid_results(mock_file, mock_logger, invalid_results):
+    mock_file.read_data = invalid_results
+    _ = JobProfile.load_profiles()
+    mock_logger.error.assert_called_once()
+
+
     
