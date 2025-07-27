@@ -7,3 +7,4 @@ commands/*
 !commands/readme.md
 todo
 .coverage
+*.log

@@ -6,6 +6,9 @@ import re
 import pyodbc
 from utils.source_data_accessor import SourceDataAccessor
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Source:
@@ -123,10 +126,10 @@ class JobProfile:
             with open('job_profiles.json') as file:
                 profiles_json = json.load(file)
         except ValueError as e:
-            print('Invalid profile:', e)
+            logger.error('Invalid profile:', e)
             return []
         except FileNotFoundError as e:
-            print('Profiles not found.', e)
+            logger.error('Profiles not found.', e)
             return []
         
         profiles = []
@@ -137,7 +140,7 @@ class JobProfile:
             except:
                 failed_profiles +=1
         if failed_profiles > 0:
-            print('unable to load some profiles.')
+            logger.warning(f'unable to load {failed_profiles} profiles. please make sure all profiles are configured correctly in job_profiles.json')
         return profiles
 
 

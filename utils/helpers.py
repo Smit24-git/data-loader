@@ -1,11 +1,13 @@
 from utils.env import get_env
-
+import logging
+logger = logging.getLogger(__name__)
 
 def get_query(type, job_name) -> str:
     try:
         with open(f'./commands/{job_name}/{type}.sql') as file:
             return file.read()
-    except Exception:
+    except Exception as e:
+        logger.error('error while accessing query from file.', e)
         return None
 
 def has_key(obj, key) -> bool:
@@ -16,5 +18,5 @@ def get_connection_string(data_source):
         env_values = get_env()
         return env_values[f'{data_source}_source_conn']
     except KeyError:
-        print(f"{data_source}_source_conn is not configured.")
+        logger.error(f"{data_source}_source_conn is not configured.")
         return None

@@ -1,5 +1,6 @@
 import sqlite3
-
+import logging
+logger = logging.getLogger(__name__)
 
 class DestinationDataCollection:
 
@@ -16,7 +17,7 @@ class DestinationDataCollection:
             cur.execute('vacuum')
             self.conn.commit()
         except:
-            print("unable to vacuum the destination database")
+            logger.critical("unable to vacuum the destination database")
         
         cur.execute(f'create table {table_name}({columns})')
         self.conn.commit()

@@ -1,6 +1,9 @@
 import pyodbc
 from collections.abc import Generator
 from utils.defaults.batch_size import default_batch_size
+import logging
+logger = logging.getLogger(__name__)
+
 # the advantage database server does not have any prevention against "WRITES"
 # Never Ever use any insert, update, and delete statements here.
 
@@ -25,7 +28,7 @@ class SourceDataAccessor:
         try:
             self.cnxn.autocommit = False
         except:
-            print("AutoCommit for the source is set to True")
+            logger.warning("AutoCommit for the source is set to True")
 
 
     def get_columns_from(self, query) -> list[str]:
