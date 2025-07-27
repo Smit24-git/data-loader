@@ -7,7 +7,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 out = sys.stdout
  
@@ -47,7 +47,7 @@ def setup_logging():
 def main():
     """entry point"""
     setup_logging()
-    logger.info('Started')
+    logger.info(f'Started v{__version__}')
     profiles = JobProfile.load_profiles()
     profiles = [j for j in profiles if j.disabled == False]
     
