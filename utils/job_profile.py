@@ -130,12 +130,12 @@ class Source:
             srcAccessor = SourceDataAccessor(self.connection_str)
             if self.table_full_name is not None:
                 tables:list[str] = srcAccessor.get_table_names()
-                if self.table_full_name not in [i[2] for i in tables]:
+                if self.table_full_name.lower() not in [i[2].lower() for i in tables]:
                     table_split = self.table_full_name.split('.')
                     if len(table_split) > 1:
                         check = 2
                         for i in range(len(table_split)-1, -1, -1):
-                            if table_split[i] not in [det[check] for det in tables]:
+                            if table_split[i].lower() not in [det[check].lower() for det in tables]:
                                 return False, 'Table does not exist'
                             else:
                                 if check == 2:
@@ -149,7 +149,8 @@ class Source:
 
                 if self.columns is not None:
                     columns = srcAccessor.get_columns_of(self.table, self.schema)
-                    user_entered_cols = [i.strip() for i in self.columns.split(',')]
+                    columns = [c.lower() for c in columns]
+                    user_entered_cols = [i.strip().lower() for i in self.columns.split(',')]
                     if len(set(user_entered_cols).intersection(set(columns))) != len(user_entered_cols):
                         return False, 'one or more columns missing.'
         except pyodbc.Error as e:

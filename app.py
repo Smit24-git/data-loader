@@ -5,7 +5,6 @@ import sys
 import math
 import logging
 import argparse
-from prefect import task
 
 __version__ = "0.1.3"
 out = sys.stdout
@@ -22,7 +21,8 @@ def setup_logging():
     logging.basicConfig(
         filename='app.log', 
         level=logging.INFO,
-        format=FORMAT)
+        format=FORMAT,
+        force=True)
     
     # to stdout
     handler = logging.StreamHandler(sys.stdout)
@@ -48,7 +48,6 @@ def input_selection(options: List[JobProfile]):
 
     return opt
            
-@task
 def main(job_name):
     """entry point"""
     setup_logging()
