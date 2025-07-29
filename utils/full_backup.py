@@ -11,7 +11,7 @@ def transform(batched_rows):
     return [[str(r_item) if type(r_item)==Decimal else r_item  for r_item in row] for row in batched_rows]
 
 
-def run_full_backup(prf:JobProfile) -> Generator[list]:
+def run_full_backup(prf:JobProfile) -> Generator[tuple]:
     
     collector = DestinationDataCollection(prf.destination.database_name)
     try:
