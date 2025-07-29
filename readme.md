@@ -64,6 +64,71 @@ Run the application:
 python app.py
 ```
 
+You can also run a specific job directly from the command line using the `-n` or `--name` argument.
+
+```bash
+python app.py --name "your-job-name"
+```
+
+This project also supports running jobs as Prefect flows.
+
+```bash
+prefect flow run main --param job_name="your-job-name"
+```
+
+## Prefect Deployment
+
+This project uses a `prefect.yaml` file to define and manage deployments.
+
+### Configuration
+
+1.  **Copy the Example:**
+
+    Create a `prefect.yaml` file by copying the example file.
+
+    ```bash
+    cp prefect.example.yaml prefect.yaml
+    ```
+
+2.  **Customize the Deployment:**
+
+    Open `prefect.yaml` and modify the deployment settings to match your environment. You will need to update the `job_name` parameter and the `work_pool` name.
+
+### Running a Deployment
+
+1.  **Apply the Deployment:**
+
+    This command will create or update the deployment on the Prefect server.
+
+    ```bash
+    prefect deploy
+    ```
+
+2.  **Create a Work Pool:**
+
+    Create a work pool for the agent to execute the deployment runs.
+
+    ```bash
+    prefect work-pool create --type process "your-work-pool-name"
+    ```
+
+3.  **Start a Worker:**
+
+    Start a worker to execute the deployment runs.
+
+    ```bash
+    prefect worker start --pool "your-work-pool-name"
+    ```
+
+### Local Configuration
+
+For local development, you can set the following Prefect variables to connect to a local server instance and enable logging from the application logger.
+
+```bash
+prefect config set PREFECT_API_URL="http://127.0.0.1:4200/api"
+prefect config set PREFECT_LOGGING_EXTRA_LOGGERS="app"
+```
+
 ## Job Profiles
 
 The `job_profiles.json` file is used to configure data loading jobs. It contains an array of job objects.
