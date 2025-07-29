@@ -15,13 +15,13 @@ SQL data loader designed to extract and load from different sql sources to the l
 1.  Clone the repository:
 
     ```
-    git clone https://github.com/your-username/your-repository.git
+    git clone https://github.com/Smit24-git/data-loader.git
     ```
 
 2.  Navigate to the project directory:
 
     ```
-    cd your-repository
+    cd data-loader
     ```
 
 3.  Create a virtual environment:
