@@ -2,6 +2,12 @@
 
 SQL data loader designed to extract and load from different sql sources to the lightweight sqlite tables.
 
+## Key Features
+
+*   **Configuration-Driven ETL:** Define all your data pipelines in a simple `job_profiles.json` file. No more writing repetitive boilerplate code.
+*   **Multi-Source Connectivity:** Connect to different database sources (e.g., PostgreSQL, SQL Server, MySQL) by specifying the connection string in your environment file and referencing it in your job profile.
+*   **Command-Line & Prefect Integration:** Run jobs directly from the command line for simple tasks or orchestrate them as Prefect flows for complex workflows.
+*   **Efficient Batch Processing:** Load large datasets efficiently by configuring the batch size for each job.
 ## Getting Started
 
 ### Prerequisites
@@ -174,7 +180,7 @@ The `job_profiles.json` file is used to configure data loading jobs. It contains
 To run the tests, run the following command:
 
 ```
-pytest
+py -m pytest .
 ```
 
 
