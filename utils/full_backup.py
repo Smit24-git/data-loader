@@ -22,11 +22,11 @@ def run_full_backup(prf:JobProfile) -> Generator[tuple]:
             if(source_query is None):
                 if(prf.source.columns is None or prf.source.columns.strip() == ''):
                     logger.info("Columns are not provided, all columns are to be transmitted.")
-                    columns = ','.join(accessor.get_columns_of(prf.source.table, prf.source.schema))
+                    columns = ','.join(accessor.get_columns_by_table(prf.source.table, prf.source.schema))
                 else:
                     columns = prf.source.columns
             else:
-                columns = ','.join(accessor.get_columns_from(source_query))
+                columns = ','.join(accessor.get_columns_by_query(source_query))
             
             # initialize target collector
             collector.clear_table(prf.destination.table, columns)

@@ -31,12 +31,6 @@ class SourceDataAccessor:
             logger.warning("AutoCommit for the source is set to True")
 
 
-    def get_columns_from(self, query) -> list[str]:
-        """returns columns for query table"""
-        crsr = self.cnxn.cursor()
-        crsr.execute(query)        
-        cols = [col[0] for col in crsr.description]
-        return cols
     
     def get_table_names(self) -> list[str]:
         """returns tables"""
@@ -45,14 +39,27 @@ class SourceDataAccessor:
 
         return tables
     
-    def get_columns_of(self, table_name, schema_name = None) -> list[str]:
+    def get_columns_by_query(self, query, metadata = False) -> list[str]:
+        """returns columns for query table"""
+        crsr = self.cnxn.cursor()
+        crsr.execute(query)
+        if metadata:
+            return ([['name'],['type_code'],['display'],['internal_size'],['precision'],['scale'],['null_ok']], crsr.description)
+        else:  
+            cols = [col[0] for col in crsr.description]
+            return cols
+    
+    def get_columns_by_table(self, table_name, schema_name = None, metadata = False) -> list[str]:
         """returns columns for table"""
         crsr = self.cnxn.cursor()
         
         cols_crsr = crsr.columns(table_name) if schema_name is None else crsr.columns(table=table_name, schema=schema_name)
         
-        cols = [col[3] for col in cols_crsr.fetchall()]
-        return cols
+        if(metadata):
+            return (cols_crsr.description, cols_crsr.fetchall())
+        else:
+            cols = [col[3] for col in cols_crsr.fetchall()]
+            return cols
 
     def __get_cursor_for_query(self, query) -> pyodbc.Cursor:
         """returns cursor embedded with select command"""

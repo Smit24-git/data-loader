@@ -103,7 +103,21 @@ class Source:
             return get_query(query_type, self.job_name) 
         else:
             return None
-    
+    def list_columns_metadata(self):
+        self.validate_against_source()
+        srcAccessor = SourceDataAccessor(self.connection_str)
+
+        if self.from_file:
+            return srcAccessor.get_columns_by_query(
+                self.get_query_from_file('source'),
+                metadata=True
+            )
+        else:
+            (desc, columns_meta) =  srcAccessor.get_columns_by_table(
+                self.table, self.schema, metadata=True)
+            user_entered_cols = [i.strip().lower() for i in self.columns.split(',')]
+            return (desc,[cm for cm in columns_meta if cm[3].lower() in user_entered_cols])
+
     def validate(self):
         if self.connection_str is None:
             return False, 'Unable to identify default connection string of source database'
@@ -148,7 +162,7 @@ class Source:
                     
 
                 if self.columns is not None:
-                    columns = srcAccessor.get_columns_of(self.table, self.schema)
+                    columns = srcAccessor.get_columns_by_table(self.table, self.schema)
                     columns = [c.lower() for c in columns]
                     user_entered_cols = [i.strip().lower() for i in self.columns.split(',')]
                     if len(set(user_entered_cols).intersection(set(columns))) != len(user_entered_cols):

@@ -22,7 +22,9 @@ deployments:
   flow_name: main 
   entrypoint: flows.py:main
   parameters: {
-    job_name: '<job_name>'
+    args: {
+      "job_name": 'dataset-versions-csv' 
+    }
   }
   work_pool:
     name: <worker_pool_name>

@@ -1,3 +1,4 @@
+import json
 from typing import List
 from utils.full_backup import run_full_backup
 from utils.job_profile import JobProfile
@@ -12,6 +13,7 @@ out = sys.stdout
 # arg parse
 parser = argparse.ArgumentParser()
 parser.add_argument('-n','--name', metavar='name', dest='job_name', help='job name to run.')
+parser.add_argument('-cc','--columns', action='store_true', dest='list_columns', help='list all columns from the job.')
 
 # logger
 logger = logging.getLogger(__name__)
@@ -48,10 +50,11 @@ def input_selection(options: List[JobProfile]):
 
     return opt
            
-def main(job_name):
+def main(args):
     """entry point"""
     setup_logging()
     logger.info(f'Started v{__version__}')
+    logger.info(f"provided arguments {args}")
     
     profiles = JobProfile.load_profiles()
     profiles = [j for j in profiles if j.disabled == False]
@@ -62,22 +65,39 @@ def main(job_name):
     print(len(profiles), "Job(s) Loaded successfully.", end='\n\n')
 
     job:JobProfile = None
-
-    if job_name is None:
+    if args is None:
         opt = input_selection(profiles)
         if opt==0:
             logger.info('Ended')
             return
         
         job = profiles[opt-1]
-    else:    
-        jobs = [p for p in profiles if p.name == job_name]
-        if len(jobs) == 0:
-            logger.error(f"job '{job_name}' not found.")
-            logger.info(f"Ended")
-            return
-        job = jobs.pop()
-    
+    else:
+        if(args.job_name is not None):
+            job_name = args.job_name
+            jobs = [p for p in profiles if p.name == job_name]
+            if len(jobs) == 0:
+                logger.error(f"job '{job_name}' not found.")
+                logger.info(f"Ended")
+                return
+            job = jobs.pop()
+            if args.list_columns == True:
+                (col_desc, columns) = job.source.list_columns_metadata()
+                if col_desc is None:
+                    print(columns)
+                else:
+                    desc = [i[0] for i in col_desc]
+                    columns_metadata = []
+                    for col in columns:
+                        c_metadata = {}
+                        for (i, col_property) in enumerate(col):
+                            c_metadata[desc[i]] = str(col_property) if type(col_property) == type else col_property
+                        columns_metadata.append(c_metadata)
+                    print(json.dumps(columns_metadata, indent=4))
+                logger.info(f"Ended")
+                return
+            else:
+                """proceed with running a job"""
     (is_success, msg) = job.validate()
     
     logger.info(f'{job.name} job selected.')
@@ -96,4 +116,4 @@ def main(job_name):
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    main(args.job_name)
+    main(args)

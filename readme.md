@@ -76,6 +76,12 @@ You can also run a specific job directly from the command line using the `-n` or
 python app.py --name "your-job-name"
 ```
 
+To get the column metadata for a specific job, you can use the `-cc` or `--columns` flag along with the job name.
+
+```bash
+python app.py --name "your-job-name" --columns
+```
+
 This project also supports running jobs as Prefect flows.
 
 ```bash
