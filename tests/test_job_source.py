@@ -17,7 +17,7 @@ source_table_validations = [
 @patch('utils.job_profile.default_source_connection_string', return_value = 'mock_default_conn')
 @patch('utils.helpers.get_env', return_value={'my_data_source_source_conn': 'mock_connection_string'})
 @patch('utils.source_data_accessor.SourceDataAccessor.connect')
-@patch('utils.source_data_accessor.SourceDataAccessor.get_columns_of', 
+@patch('utils.source_data_accessor.SourceDataAccessor.get_columns_by_table', 
        return_value = ['col1', 'col2'])
 @patch('utils.source_data_accessor.SourceDataAccessor.get_table_names', 
        return_value = [('db','schema','table1'), ('db','schema','table2')])
@@ -37,7 +37,7 @@ def test_source_validation(mock_tables, mock_cols, mock_connect, mock_helper_env
 @patch('utils.job_profile.default_source_connection_string', return_value = 'mock_default_conn_str')
 @patch('utils.source_data_accessor.SourceDataAccessor.connect',
        side_effect=pyodbc.Error)
-@patch('utils.source_data_accessor.SourceDataAccessor.get_columns_of', 
+@patch('utils.source_data_accessor.SourceDataAccessor.get_columns_by_table', 
        side_effect=pyodbc.Error)
 @patch('utils.source_data_accessor.SourceDataAccessor.get_table_names',
        side_effect=pyodbc.Error)
