@@ -1,6 +1,6 @@
 from tests.job_examples import *
 
-from utils.job_profile import Source
+from utils.job_profile import JobProfile, Source
 import pytest
 from unittest.mock import MagicMock, patch, mock_open
 import pyodbc
@@ -95,3 +95,31 @@ def test_valid_source_table_name(mock_validate_source, mock_default_conn, valid_
     (res, err) = source.validate()
     assert res, f'{valid_table_name} is a valid source table.'
     
+
+@patch('utils.helpers.get_env', return_value={'my_data_source_source_conn': 'mock_connection_string'})
+@patch('utils.job_profile.default_source_connection_string', return_value = 'mock_default_conn')
+@patch('utils.job_profile.Source.validate_against_source',
+       return_value=(True, None))
+def test_valid_default_connection_string(mock_val_source, mock_source_conn_str, mock_get_env):
+    """"""
+    mock_source_conn_str.return_value = 'mock_default_conn'
+    job = valid_full_json
+    if 'datasource' in job['source'].keys():
+        del job['source']['datasource']
+    s = Source(job['source'], job['name'])
+    assert s.connection_str.return_value == 'mock_default_conn', f"source connection string should set to default value."
+
+@patch('utils.helpers.get_env', return_value={'my_data_source_source_conn': 'mock_connection_string'})
+@patch('utils.job_profile.default_source_connection_string', return_value = 'mock_default_conn')
+@patch('utils.job_profile.Source.validate_against_source',
+       return_value=(True, None))
+def test_valid_provided_connection_string(mock_val_source, mock_source_conn_str, mock_get_env):
+    """"""
+    mock_source_conn_str.return_value = 'mock_default_conn'
+    job = valid_full_json
+    if 'datasource' not in job['source'].keys():
+        job['source']['datasource'] = 'my_data_source'
+    s = Source(job['source'], job['name'])
+    assert s.connection_str == 'mock_connection_string', f"source connection string should set to provided source value."
+
+
