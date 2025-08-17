@@ -8,4 +8,5 @@ commands/*
 todo
 .coverage
 *.log
+*brainstorm*
 prefect.yaml

@@ -6,6 +6,7 @@ SQL data loader designed to extract and load from different sql sources to the l
 
 *   **Configuration-Driven ETL:** Define all your data pipelines in a simple `job_profiles.json` file. No more writing repetitive boilerplate code.
 *   **Multi-Source Connectivity:** Connect to different database sources (e.g., PostgreSQL, SQL Server, MySQL) by specifying the connection string in your environment file and referencing it in your job profile.
+*   **Incremental Updates:** Save time and resources by only loading new data. The initial implementation supports incremental updates by comparing row counts.
 *   **Command-Line & Prefect Integration:** Run jobs directly from the command line for simple tasks or orchestrate them as Prefect flows for complex workflows.
 *   **Efficient Batch Processing:** Load large datasets efficiently by configuring the batch size for each job.
 ## Getting Started
@@ -149,7 +150,7 @@ The `job_profiles.json` file is used to configure data loading jobs. It contains
 *   `disabled` (boolean, optional): If `true`, the profile will be ignored.
 *   `name` (string, required): A unique name for the job.
 *   `desc` (string, optional): A description of what the job does.
-*   `type` (string, optional): The type of job. Currently supports `full`. Defaults to `full` if omitted.
+*   `type` (string, optional): The type of job. Supports `full` and `incremental_by_count`. Defaults to `full` if omitted.
 *   `batch_size` (integer, optional): The number of records to process in each batch. Defaults to the value set in `.env` or 5000.
 *   `source` (object, required): Defines the data source.
     *   `datasource` (string, optional): Specifies a connection string key from the `.env` file (e.g., `mssql_source_conn`). If not provided, the `source_conn` from the `.env` file is used.
@@ -165,9 +166,24 @@ The `job_profiles.json` file is used to configure data loading jobs. It contains
 [
     {
         "disabled": true,
-        "name": "x-job-name",
-        "desc": "what does this job do.",
+        "name": "x-job-name-full",
+        "desc": "This is an example of a full backup job.",
         "type": "full",
+        "batch_size": 5000,
+        "source": {
+            "datasource": "specify datasource if table exists in different source than default",
+            "table": "source table name",
+            "columns":"columns separated by comma"
+        },
+        "destination": {
+            "table": "sqlite destination table name"  
+        }
+    },
+    {
+        "disabled": false,
+        "name": "x-job-name-incremental",
+        "desc": "This is an example of an incremental backup job by count.",
+        "type": "incremental_by_count",
         "batch_size": 5000,
         "source": {
             "datasource": "specify datasource if table exists in different source than default",

@@ -9,6 +9,18 @@ class DestinationDataCollection:
             database_location, 
             autocommit=False)        
 
+    def is_exist(self, table_name):
+        cur = self.conn.cursor()
+        cur.execute("select name from sqlite_master where type='table' and name=?", [table_name])
+        data = cur.fetchone()
+        return data is not None and data[0] == table_name
+
+    def get_count(self, table_name):
+        cur = self.conn.cursor()
+        cur.execute(f'select count(*) from {table_name}')
+        data = cur.fetchone()
+        return data[0]
+
     def clear_table(self, table_name, columns):
         cur = self.conn.cursor()
         cur.execute(f'drop table if exists {table_name}')

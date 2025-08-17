@@ -35,7 +35,7 @@ basic_schema = {
             },
             "type": {
                 "description": "describes how the job is loaded.",
-                "enum": ["full", "part"]
+                "enum": ["full", "incremental_by_count"]
             },
             "batch_size": {
                 "description": "number of records to be processed per batch",
@@ -264,8 +264,6 @@ class JobProfile:
         # basic regex check
         if re.fullmatch(r'([\w\-]){1,30}',self.name) is None:
             return False, 'Invalid profile name'
-        if self.type is not None and re.fullmatch(r'(full|part){1}', self.type) is None:
-            return False, 'Invalid profile type'
 
         source_res, source_msg = self.source.validate()
         if source_res == False:

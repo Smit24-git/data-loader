@@ -1,9 +1,24 @@
 [
     {
         "disabled": true,
-        "name": "x-job-name",
-        "desc": "what does this job do.",
+        "name": "x-job-name-full",
+        "desc": "This is an example of a full backup job.",
         "type": "full",
+        "batch_size": 5000,
+        "source": {
+            "datasource": "specify datasource if table exists in different source than default",
+            "table": "source table name",
+            "columns":"columns separated by comma"
+        },
+        "destination": {
+            "table": "sqlite destination table name"  
+        }
+    },
+    {
+        "disabled": false,
+        "name": "x-job-name-incremental",
+        "desc": "This is an example of an incremental backup job by count.",
+        "type": "incremental_by_count",
         "batch_size": 5000,
         "source": {
             "datasource": "specify datasource if table exists in different source than default",

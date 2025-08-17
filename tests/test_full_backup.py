@@ -1,6 +1,6 @@
 from tests.job_examples import *
 from utils.job_profile import JobProfile
-from utils.full_backup import run_full_backup
+from utils.full_backup import run_backup
 from unittest.mock import patch, MagicMock
 from utils.full_backup import SourceDataAccessor
 from collections.abc import Generator
@@ -24,7 +24,7 @@ def test_full_backup_with_table_columns(odbc, mock_collector, mock_yield):
     total = -1
     processed = 0
     batches_processed = 0
-    for (total_count, completed) in run_full_backup(job):
+    for (total_count, completed) in run_backup(job):
         batches_processed += 1
         total = total_count
         processed = completed

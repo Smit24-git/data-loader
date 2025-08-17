@@ -67,9 +67,6 @@ class SourceDataAccessor:
         crsr.execute(query)
         return crsr
     
-    def __get_cursor_for_table(self, table_name, columns) -> pyodbc.Cursor:
-        """returns cursor embedded with select command"""
-        return self.__get_cursor_for_query(f"select {columns} from {table_name}")
     
     def __get_row_count(self, table_name) -> int:
         """returns cursor embedded with select command"""
@@ -92,10 +89,11 @@ class SourceDataAccessor:
             cnt+=1
             if len(rows) == 0: break
     
-    def yield_data_batches(self, table_name, columns) -> Generator[list]:
+    def yield_data_batches(self, table_name, columns, skip = 0) -> Generator[list]:
         """collects data in batches, ram intensive. if """
         total_row_count = self.__get_row_count(table_name)
-        crsr = self.__get_cursor_for_table(table_name, columns)
+        first_column = columns.split(',')[0]
+        crsr = self.__get_cursor_for_query(f"select {columns} from {table_name} order by {first_column} offset {skip} rows")
         cnt = 0
         while True:
             rows = crsr.fetchmany(self.batch_size)

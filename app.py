@@ -1,13 +1,13 @@
 import json
 from typing import List
-from utils.full_backup import run_full_backup
+from utils.full_backup import run_backup
 from utils.job_profile import JobProfile
 import sys
 import math
 import logging
 import argparse
 
-__version__ = "0.1.3"
+__version__ = "0.2.0"
 out = sys.stdout
 
 # arg parse
@@ -65,7 +65,8 @@ def main(args):
     print(len(profiles), "Job(s) Loaded successfully.", end='\n\n')
 
     job:JobProfile = None
-    if args is None:
+
+    if args is None or args.job_name is None:
         opt = input_selection(profiles)
         if opt==0:
             logger.info('Ended')
@@ -102,13 +103,15 @@ def main(args):
     
     logger.info(f'{job.name} job selected.')
     if is_success:
-        if(job.type is None or job.type == 'full'):
-            for (total_rows_count, completed) in run_full_backup(job):
+        for (total_rows_count, completed) in run_backup(job):
+            if(completed == 0 and total_rows_count != 0):
+                print(f'{job.name}: {0}%', "completed.", end='\r', file=out, flush=True)
+            elif(completed == total_rows_count):
+                print(f'{job.name}: {100}%', "completed.", end='\r', file=out, flush=True)
+                logger.info(f'{job.name} completed successfully.')
+            else:
                 print(f'{job.name}: {math.ceil((completed/total_rows_count)*100)}%', "completed.", end='\r', file=out, flush=True)
-            print('\n')
-            logger.info(f'{job.name} completed successfully.')
-        else:
-            logger.error("Job Type is not supported!")
+        print('\n')
     else:
         logger.error(f'Invalid job {job.name}.\n',
                msg if msg is not None else 'Please make sure all jobs are configured correctly.')    
