@@ -19,16 +19,20 @@ def run_backup(prf:JobProfile) -> Generator[tuple]:
             # fetch columns to process
             source_query = prf.source.get_query_from_file('source')
             source_query_count = prf.source.get_query_from_file('count')
+            column_list = []
             if(source_query is None):
                 if(prf.source.columns is None or prf.source.columns.strip() == ''):
                     logger.info("Columns are not provided, all columns are to be transmitted.")
-                    columns = ','.join(accessor.get_columns_by_table(prf.source.table, prf.source.schema))
+                    column_list = accessor.get_columns_by_table(prf.source.table, prf.source.schema)
                 else:
-                    columns = prf.source.columns
+                    column_list = prf.source.columns.split(',')
             else:
-                columns = ','.join(accessor.get_columns_by_query(source_query))
+                column_list = accessor.get_columns_by_query(source_query)
             
+            column_list = [f'[{i.strip()}]' for i in column_list]
+            columns = ', '.join(column_list)
             completed = 0
+            data_batches_generator = None
             if prf.type == 'incremental_by_count':
                 if collector.is_exist(prf.destination.table):
                     skip = collector.get_count(prf.destination.table)

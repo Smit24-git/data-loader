@@ -11,69 +11,73 @@ from jsonschema import SchemaError, ValidationError, validate
 
 logger = logging.getLogger(__name__)
 
-basic_schema = {
+basic_schema_profile = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Job Profile",
+    "description": "Profile",
+    "type": "object",
+    "properties": {
+        "disabled": {
+            "description": "optional flag to disable profile",
+            "type": "boolean"
+        },
+        "name": {
+            "description": "profile name",
+            "type": "string",
+            "minLength": 1
+        },
+        "desc": {
+            "description": "profile description",
+            "type": "string",
+        },
+        "type": {
+            "description": "describes how the job is loaded.",
+            "enum": ["full", "incremental_by_count", None]
+        },
+        "batch_size": {
+            "description": "number of records to be processed per batch",
+            "type": "number",
+            "minimum": 2000
+        },
+        "source": {
+            "description": "source location configuration for the profile",
+            "type": "object",
+            "properties": {
+                "datasource": {
+                    "description": "source data source key to target specific source location",
+                    "type": "string"
+                },
+                "table": {
+                    "description": "name of the source table to be transmitted",
+                    "type": "string"
+                },
+                "columns": {
+                    "description": "names of the column to be transmitted (separated by comma)",
+                    "type": "string"
+                },
+            },
+            "dependentRequired": {
+                "columns": ["table"]
+            },
+        },
+        "destination": {
+            "description": "target location configuration for the profile",
+            "type": "object",
+            "properties": {
+                "table": {
+                    "description":"name of the destination table",
+                    "type": "string"
+                }
+            }
+        },
+    }
+}
+basic_schema_list = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Job Profiles",
     "description": "List of profiles.",
     "type": "array",
-    "items": {
-        "description": "Profile",
-        "type": "object",
-        "properties": {
-            "disabled": {
-                "description": "optional flag to disable profile",
-                "type": "boolean"
-            },
-            "name": {
-                "description": "profile name",
-                "type": "string",
-                "minLength": 1
-            },
-            "desc": {
-                "description": "profile description",
-                "type": "string",
-            },
-            "type": {
-                "description": "describes how the job is loaded.",
-                "enum": ["full", "incremental_by_count"]
-            },
-            "batch_size": {
-                "description": "number of records to be processed per batch",
-                "type": "number"
-            },
-            "source": {
-                "description": "source location configuration for the profile",
-                "type": "object",
-                "properties": {
-                    "datasource": {
-                        "description": "source data source key to target specific source location",
-                        "type": "string"
-                    },
-                    "table": {
-                        "description": "name of the source table to be transmitted",
-                        "type": "string"
-                    },
-                    "columns": {
-                        "description": "names of the column to be transmitted (separated by comma)",
-                        "type": "string"
-                    },
-                },
-                "dependentRequired": {
-                    "columns": ["table"]
-                },
-            },
-            "destination": {
-                "description": "target location configuration for the profile",
-                "type": "object",
-                "properties": {
-                    "table": {
-                        "description":"name of the destination table",
-                        "type": "string"
-                    }
-                }
-            },
-        }
-    },
+    "items": basic_schema_profile,
     "minItems": 1,
     "uniqueItems": True,
     "required": ['name'],
@@ -200,6 +204,7 @@ class Destination:
 class JobProfile:
 
     def __init__(self, json):
+        validate(json, basic_schema_profile)
         self.load_profile(json=json)
 
     @staticmethod
@@ -209,20 +214,20 @@ class JobProfile:
             with open('job_profiles.json') as file:
                 profiles_json = json.load(file)
                 # validate structure and types
-                validate(profiles_json, basic_schema)
+                validate(profiles_json, basic_schema_list)
 
         except ValueError as e:
-            logger.error('Invalid profile:', e)
-            return []
+            logger.error('Invalid profile.')
+            raise e
         except FileNotFoundError as e:
-            logger.error('Profiles not found.', e)
-            return []
+            logger.error('Profiles not found.')
+            raise e
         except ValidationError as e:
-            logger.error('invalid profile(s).', e)
-            return []
+            logger.error('invalid profile(s).')
+            raise e
         except SchemaError as e:
-            logger.critical("invalid schema.", e)
-            return []
+            logger.critical("invalid schema.")
+            raise e
         
         profiles = []
         failed_profiles = 0
@@ -247,7 +252,7 @@ class JobProfile:
 
     def validate(self):
         """validates values"""
-        min_batch_size = 2000
+        
         
         if self.batch_size is None:
             return False, "Batch Size Must Require."
@@ -256,10 +261,6 @@ class JobProfile:
         
         if isinstance(self.batch_size, int) == False:
             return False, 'Batch size must be an integer value.'
-
-        # basic value boundary checks
-        if self.batch_size < min_batch_size:
-            return False, f'Batch size must be >= {min_batch_size}'
 
         # basic regex check
         if re.fullmatch(r'([\w\-]){1,30}',self.name) is None:
