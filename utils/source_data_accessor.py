@@ -36,7 +36,6 @@ class SourceDataAccessor:
         """returns tables"""
         crsr = self.cnxn.cursor()
         tables = [(i[0], i[1], i[2]) for i in crsr.tables().fetchall()]
-
         return tables
     
     def get_columns_by_query(self, query, metadata = False) -> list[str]:
@@ -78,7 +77,7 @@ class SourceDataAccessor:
         crsr.execute(query)
         return crsr.fetchone()[0]
     
-    def yield_data_batches_by_query(self, query:str, count_query:str) -> Generator[list]:
+    def yield_data_by_query(self, query:str, count_query:str) -> Generator[list]:
         """collects data in batches, ram intensive. if """
         total_row_count = self.__get_row_count_by_query(count_query)
         crsr = self.__get_cursor_for_query(query)
@@ -93,10 +92,18 @@ class SourceDataAccessor:
         """collects data in batches, ram intensive. if """
         total_row_count = self.__get_row_count(table_name)
         first_column = columns.split(',')[0]
+        # offset is not supported for every database. (eg. ADS tables do not support offsets)
         crsr = self.__get_cursor_for_query(f"select {columns} from {table_name} order by {first_column} offset {skip} rows")
-        cnt = 0
         while True:
             rows = crsr.fetchmany(self.batch_size)
             yield (total_row_count, rows)
-            cnt+=1
+            if len(rows) == 0: break
+    
+    def yield_data(self, table_name, columns) -> Generator[list]:
+        """collects data in batches, ram intensive. if """
+        total_row_count = self.__get_row_count(table_name)
+        crsr = self.__get_cursor_for_query(f"select {columns} from {table_name}")
+        while True:
+            rows = crsr.fetchmany(self.batch_size)
+            yield (total_row_count, rows)
             if len(rows) == 0: break

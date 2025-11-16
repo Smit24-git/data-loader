@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock
 from utils.full_backup import SourceDataAccessor
 from collections.abc import Generator
 
-@patch.object(SourceDataAccessor, 'yield_data_batches')
+@patch.object(SourceDataAccessor, 'yield_data')
 @patch('utils.full_backup.DestinationDataCollection')
 @patch('pyodbc.connect')
 def test_full_backup_with_table_columns(odbc, mock_collector, mock_yield):
@@ -30,7 +30,7 @@ def test_full_backup_with_table_columns(odbc, mock_collector, mock_yield):
         processed = completed
     
     expected_rows = 15
-    assert batches_processed == 3, "expected to be called 3 times"
     assert processed == expected_rows, f"expected {expected_rows} processed rows."
     assert total == expected_rows, f"expected {expected_rows} total rows."
     assert total == processed, f"expected processed row same as total rows."
+    assert batches_processed == 3, "expected to be called 3 times"

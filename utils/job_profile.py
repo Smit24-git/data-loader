@@ -148,13 +148,16 @@ class Source:
             srcAccessor = SourceDataAccessor(self.connection_str)
             if self.table_full_name is not None:
                 tables:list[str] = srcAccessor.get_table_names()
+                if len(tables) == 0:
+                    return False, "database does not have any tables to validate against."
+                
                 if self.table_full_name.lower() not in [i[2].lower() for i in tables]:
                     table_split = self.table_full_name.split('.')
                     if len(table_split) > 1:
                         check = 2
                         for i in range(len(table_split)-1, -1, -1):
                             if table_split[i].lower() not in [det[check].lower() for det in tables]:
-                                return False, 'Table does not exist'
+                                return False, f'Table {table_split[i]} does not exist'
                             else:
                                 if check == 2:
                                     self.table = table_split[i]

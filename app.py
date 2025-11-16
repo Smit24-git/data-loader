@@ -113,8 +113,7 @@ def main(args):
                 print(f'{job.name}: {math.ceil((completed/total_rows_count)*100)}%', "completed.", end='\r', file=out, flush=True)
         print('\n')
     else:
-        logger.error(f'Invalid job {job.name}.\n',
-               msg if msg is not None else 'Please make sure all jobs are configured correctly.')    
+        logger.error(f'Invalid job {job.name}.\n {msg if msg is not None else 'Please make sure all jobs are configured correctly.'}')    
     logger.info('Finished')
 
 if __name__ == '__main__':

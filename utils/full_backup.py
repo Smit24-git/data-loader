@@ -49,9 +49,9 @@ def run_backup(prf:JobProfile) -> Generator[tuple]:
             if data_batches_generator is None:
                 collector.clear_table(prf.destination.table, columns)
                 if(source_query is None):
-                    data_batches_generator = accessor.yield_data_batches(table_name=prf.source.table_full_name, columns=columns)
+                    data_batches_generator = accessor.yield_data(table_name=prf.source.table_full_name, columns=columns)
                 else:
-                    data_batches_generator = accessor.yield_data_batches_by_query(query=source_query, count_query=source_query_count)
+                    data_batches_generator = accessor.yield_data_by_query(query=source_query, count_query=source_query_count)
 
             for (total_count, batched_rows) in data_batches_generator:
                 transformed_rows = transform(batched_rows)
